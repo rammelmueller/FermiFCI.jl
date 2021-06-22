@@ -6,6 +6,7 @@
     with a plain single-particle cutoff.
 
 ===============================================================================#
+push!(LOAD_PATH, "/home/lukas/projects/FermiFCI/")
 using FermiFCI
 using YAML
 using Logging, LoggingExtras
