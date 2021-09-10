@@ -138,18 +138,22 @@ function construct_hamiltonian(
                     # Fist: produce the state.
                     full_state = s_to_f(new_up, new_down)
 
-                    # Add the state to the list, format: [x, y, value].
-                    push!(col, n)
-                    push!(row, inv_lookup_table[full_state])
-                    # push!(data, sign_up*sign_down * coeffs[i,j,l,k])
+                    # Look up the new state & if present, push to the list of entries.
+                    new_state = get(inv_lookup_table, full_state, nothing)
+                    if !isnothing(new_state)
+                        # Add the state to the list, format: [x, y, value].
+                        push!(col, n)
+                        push!(row, new_state)
+                        # push!(data, sign_up*sign_down * coeffs[i,j,l,k])
 
 
-                    # Sum all contributions.
-                    elem::DType = 0.0
-                    for ud_coeff in coeffs["up_down"]
-                        elem += ud_coeff[i,j,k,l]
+                        # Sum all contributions.
+                        elem::DType = 0.0
+                        for ud_coeff in coeffs["up_down"]
+                            elem += ud_coeff[i,j,k,l]
+                        end
+                        push!(data, sign_up*sign_down * elem)
                     end
-                    push!(data, sign_up*sign_down * elem)
                 end
             end
 

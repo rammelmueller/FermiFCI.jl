@@ -27,7 +27,7 @@ end
 
 # ------------------------------------------------------------------------------
 
-function get_plain_fock_basis(n_basis::Integer, n_part::IntVector)::Array{FullState,1}
+function get_plain_fock_basis(n_basis::Integer, n_part::Array{IType,1})::Array{FullState,1}
     """ Constructs the many-body basis with a plain basis-state cutoff.
 
         Attention: Currently limited to 64 bit.
@@ -40,7 +40,7 @@ end
 
 # ------------------------------------------------------------------------------
 
-function make_plain_lookup_table(n_basis::Integer, n_part::IntVector)::Tuple{LookupDict,InvLookupDict}
+function make_plain_lookup_table(n_basis::Integer, n_part::Array{IType,1})::Tuple{LookupDict,InvLookupDict}
     """ Produces lookup table and inverse lookup table for the Fock space.
 
         This implementation uses two dictionaries, one for the lookup and one
@@ -52,6 +52,20 @@ function make_plain_lookup_table(n_basis::Integer, n_part::IntVector)::Tuple{Loo
     """
     states = get_plain_fock_basis(n_basis, n_part)
 
+    lookup_table = LookupDict()
+    inverse_lookup_table = InvLookupDict()
+    for k = 1:length(states)
+        lookup_table[k] = states[k]
+        inverse_lookup_table[states[k]] = k
+    end
+
+    return lookup_table, inverse_lookup_table
+end
+
+
+function make_lookup_table(states::Array{FullState,1})::Tuple{LookupDict,InvLookupDict}
+    """ Takes a list of states and produces the lookup tables.
+    """
     lookup_table = LookupDict()
     inverse_lookup_table = InvLookupDict()
     for k = 1:length(states)

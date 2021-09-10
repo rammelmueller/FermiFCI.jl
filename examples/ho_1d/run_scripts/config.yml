@@ -1,5 +1,0 @@
-coeff_file: "../alpha_coefficients_ho1d.hdf5"
-n_basis: 5
-n_part: [1, 1]
-n_eigenvalues: 5
-coupling: 2.0

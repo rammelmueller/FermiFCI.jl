@@ -68,7 +68,9 @@ function sign(s::SpinState, src::Integer, dst::Integer)
 end
 
 
-function max_orbital(x::SpinState)
+
+# Indexing.
+function max_orbital(s::SpinState)
     """ Returns the index of the maximally occupied orbital in a SpinState.
 
         Note:
@@ -76,5 +78,18 @@ function max_orbital(x::SpinState)
     """
     # sizeof = number of bytes.
     # leading_zeros = built in for leading zeros in representation.
-    return sizeof(x) * 8 - leading_zeros(x)
+    return sizeof(s) * 8 - leading_zeros(s)
 end
+function Base.getindex(s::SpinState, i::Unsigned)::SpinState
+    """ Note: Indexing works with the lowest bits first (i.e., the ones from the
+        right). It doesn't matter how it is used, only the implementation here
+        needs to be consistent.
+
+        Only positive integers are allowed. Negatives would only give zeros.
+    """
+    return s >>> (i-1) & 1
+end
+Base.getindex(s::SpinState, i::Integer)::SpinState = s[UInt(i)]
+Base.firstindex(s::SpinState) =  1
+Base.lastindex(s::SpinState) = max_orbital(s)
+Base.length(s::SpinState) = max_orbital(s)

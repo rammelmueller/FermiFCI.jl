@@ -46,6 +46,4 @@ const WaveFunction{T<:Union{DType,CType}} = Array{T,1}
 const OneBodyCoeffTensor{T<:DType} = Array{T,2}
 const TwoBodyCoeffTensor{T<:DType} = Array{T,4}
 
-
-# MISC stuff.
-const IntVector{T<:Integer} = Array{T,1} # That's needed for input reasons.
+abstract type Orbital end
