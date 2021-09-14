@@ -1,13 +1,13 @@
-function compute_density_profile(::Type{T}, xgrid::Array{DType,1}, obdm::Array{DType,2})::Array{DType,1} where T<:Orbital
+function compute_density_profile(::Type{T}, xgrid::Array{DType,1}, obdm::Array{DType,2}; kwargs...)::Array{DType,1} where T<:Orbital
     """ Takes the one-body density matrix and returns the spatial density-profile
         on the specified position grid.
     """
     density = zeros(DType, (length(xgrid),))
     for i=1:size(obdm)[1]
-        oi = T(i)
-        di = conj.(oi.(xgrid)) 
+        oi = T(i; kwargs...)
+        di = conj.(oi.(xgrid))
         for j=1:size(obdm)[2]
-            oj = T(j)
+            oj = T(j; kwargs...)
             density .+= di.* oj.(xgrid) .* obdm[i,j]
         end
     end
