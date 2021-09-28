@@ -25,7 +25,7 @@ param = Dict{Any,Any}(
 
 # Define the single-particle basis to be the 1D HO basis.
 include("../sp_basis_box1d.jl")
-const OrbitalType = BoxOrbital1D
+const box_orbital = BoxOrbital1D(3.5, 1.0) # Set the orbital with the correct length of the box.
 
 # Make the simple basis-cutoff Hilbert space and lookup tables with the provided method.
 lookup_table, inv_lookup_table = FermiFCI.make_plain_lookup_table(param["n_basis"], param["n_part"])
@@ -34,8 +34,9 @@ n_fock = length(lookup_table)
 # Construct the interaction tensor from scratch.
 include("../tensor_construction.jl")
 @info "Starting to construct the interaction tensor." n_basis=param["n_basis"]
-time = @elapsed v_ijkl = construct_v_tensor(OrbitalType, param["n_basis"])
+time = @elapsed v_ijkl = construct_v_tensor(box_orbital, param["n_basis"])
 @info "Constructed interaction coefficients." time=time
+
 
 # Loop through all couplings.
 results = DataFrame("n_basis"=>[], "N"=>[], "energy"=>[], "n_fock"=>[], "coupling"=>[])
@@ -51,7 +52,8 @@ for coupling in param["coupling_list"]
     # Actually construct the elements of the Hamiltonian.
     @info "Setting up Hamiltonian with $n_fock Fock states."
     mem = @allocated time = @elapsed hamiltonian = construct_hamiltonian(
-        OrbitalType,
+        box_orbital,
+        box_orbital,
         lookup_table,
         inv_lookup_table,
         coeffs
@@ -81,8 +83,8 @@ for coupling in param["coupling_list"]
         # First step: one-body density-matrix computed from the GS wavefunction.
         obdm = FermiFCI.compute_obdm(est[:,1], flavor, lookup_table, inv_lookup_table, param["n_basis"])
         # Now we fix the grid and get the spatial profile.
-        x_grid = collect(-3.5:0.01:3.5)
-        time = @elapsed density_profile = FermiFCI.compute_density_profile(OrbitalType, x_grid, obdm)
+        x_grid = collect(-box_orbital.L:0.01:box_orbital.L)
+        time = @elapsed density_profile = FermiFCI.compute_density_profile(box_orbital, x_grid, obdm)
 
         # Immediately store the density profile to the output folder.
         # (using delimited files)

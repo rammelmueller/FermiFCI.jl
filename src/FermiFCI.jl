@@ -17,6 +17,9 @@ include("typedefs.jl")
 # Some utilities for basis preparation.
 include("utils/plain_hilbert_construction.jl")
 
+# Some utilities for the computation of coefficients.
+include("utils/tensor_construction.jl")
+
 # Density matrices.
 include("utils/density_matrix.jl")
 include("utils/density_profile.jl")

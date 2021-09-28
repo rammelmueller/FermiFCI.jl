@@ -15,8 +15,11 @@ using DataFrames, CSV, DelimitedFiles
 using Logging, LoggingExtras
 
 
-# Include the definitions for the 1D HO orbital from the parent directory.
+# Define the single-particle basis to be the 1D HO basis and create an orbital
+# with the HO-length set to unity.
+# (this is assumed for all pre-computed coefficients)
 include("../sp_basis_ho1d.jl")
+const ho_orbital = HOOrbital1D(1.0)
 
 # Include the definitions
 include("hilbert_energy_restriction.jl")
@@ -25,7 +28,7 @@ include("hilbert_energy_restriction.jl")
 param = Dict{Any,Any}(
     "n_part" => [3, 1], # Particle content.
     # "n_basis_list" => collect(12:2:50), # List of cutoffs.
-    "n_basis_list" => [24, 40],
+    "n_basis_list" => [24],
     "coupling" => 5.0, # Interaction strength.
 
     "coeff_file" => "../alpha_coefficients_ho1d.hdf5", # Path for pre-computed coefficients.
@@ -46,7 +49,7 @@ for n_basis in param["n_basis_list"]
 
     # Construct the interaction coefficients.
     include("../bare_interaction.jl")
-    w_matrix = construct_bare_interaction(HOOrbital1D, n_basis, param["coupling"])
+    w_matrix = construct_bare_interaction(ho_orbital, n_basis, param["coupling"])
 
     # Piece everything together for the interaction tensor.
     include("../tensor_construction.jl")
@@ -59,7 +62,7 @@ for n_basis in param["n_basis_list"]
     ])
 
     # Produce the Hilbert space with energy restriction..
-    fock_states = get_energy_restricted_fock_basis(HOOrbital1D, n_basis, param["n_part"])
+    fock_states = get_energy_restricted_fock_basis(ho_orbital, n_basis, param["n_part"])
 
     # With those states, construct the lookup table.
     lookup_table, inv_lookup_table = make_lookup_table(fock_states)
@@ -68,7 +71,8 @@ for n_basis in param["n_basis_list"]
     # Actually construct the elements of the Hamiltonian.
     @info "Setting up Hamiltonian with $n_fock Fock states."
     mem = @allocated time = @elapsed hamiltonian = construct_hamiltonian(
-        HOOrbital1D,
+        ho_orbital,
+        ho_orbital,
         lookup_table,
         inv_lookup_table,
         coeffs
@@ -98,7 +102,7 @@ for n_basis in param["n_basis_list"]
 
         # Now we fix the grid and get the spatial profile.
         x_grid = collect(-3.5:0.01:3.5)
-        density_profile = FermiFCI.compute_density_profile(HOOrbital1D, x_grid, obdm)
+        density_profile = FermiFCI.compute_density_profile(ho_orbital, x_grid, obdm)
 
         # Immediately store the density profile to the output folder.
         # (using delimited files)
