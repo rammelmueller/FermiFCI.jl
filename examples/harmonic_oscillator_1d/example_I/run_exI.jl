@@ -19,12 +19,14 @@ using Logging, LoggingExtras
 param = Dict{Any,Any}(
     "n_part" => [3, 1], # Particle content.
     # "n_basis_list" => collect(12:2:24), # List of cutoffs.
-    "n_basis_list" => [24],
-    "coupling" => 5.0, # Interaction strength.
+    "n_basis" => 20,
+    "coupling_list" => collect(-5.0:0.5:00.0), # Interaction strength.
 
     "coeff_file" => "../alpha_coefficients_ho1d.hdf5", # Path for pre-computed coefficients.
     "n_eigenvalues" => 5, # Number of lowest eigenvalues to compute.
 )
+datafile = "output/exI_data_"*string(param["n_part"][1])*"+"*string(param["n_part"][2])*".csv"
+
 
 # Define the single-particle basis to be the 1D HO basis.
 include("../sp_basis_ho1d.jl")
@@ -38,17 +40,17 @@ alpha_coeffs = read_alpha_coeffs(param["coeff_file"])
 
 
 # Computation for multiple values of the basis cutoff.
-results = DataFrame("n_basis"=>[], "N"=>[], "energy"=>[], "n_fock"=>[])
-for n_basis in param["n_basis_list"]
-    @info "------------ Staring computation for cutoff value ------------" n_basis=n_basis
+results = DataFrame("n_basis"=>[], "N"=>[], "energy"=>[], "n_fock"=>[], "coupling"=>[])
+for coupling in param["coupling_list"]
+    @info "------------ Staring computation for coupling value ------------" coupling=coupling
 
     # Construct the interaction coefficients.
     include("../bare_interaction.jl")
-    w_matrix = construct_bare_interaction(OrbitalType, n_basis, param["coupling"])
+    w_matrix = construct_bare_interaction(OrbitalType, param["n_basis"], coupling)
 
     # Piece everything together for the interaction tensor.
     include("../tensor_construction.jl")
-    v_ijkl = construct_v_tensor(OrbitalType, n_basis, alpha_coeffs, w_matrix)
+    v_ijkl = construct_v_tensor(OrbitalType, param["n_basis"], alpha_coeffs, w_matrix)
 
     # The list of terms in the Hamiltonian, sorted by type.
     coeffs = Dict([
@@ -58,7 +60,7 @@ for n_basis in param["n_basis_list"]
     ])
 
     # Make the simple basis-cutoff Hilbert space and lookup tables with the provided method.
-    lookup_table, inv_lookup_table = FermiFCI.make_plain_lookup_table(n_basis, param["n_part"])
+    lookup_table, inv_lookup_table = FermiFCI.make_plain_lookup_table(param["n_basis"], param["n_part"])
     n_fock = length(lookup_table)
 
     # Actually construct the elements of the Hamiltonian.
@@ -84,39 +86,12 @@ for n_basis in param["n_basis_list"]
     )
     @info "Done computing the lower spectrum." time=time memory=FermiFCI.Utils.MemoryTag(mem) spectrum=ev
     for k=1:param["n_eigenvalues"]
-        push!(results, Dict{Any,Any}("n_basis"=>n_basis, "energy"=>ev[k], "N"=>k, "n_fock"=>n_fock))
+        push!(results, Dict{Any,Any}("n_basis"=>param["n_basis"], "energy"=>ev[k], "N"=>k, "n_fock"=>n_fock, "coupling"=>coupling))
     end
-
-    # Compute the ground-state density-profile for both species.
-    for flavor=1:2
-        fstr = flavor==1 ? "up" : "down"
-
-        # First step: one-body density-matrix computed from the GS wavefunction.
-        obdm_file = "output/plain_obdm_$(fstr)_nb=$(n_basis).csv"
-        time = @elapsed obdm = FermiFCI.compute_obdm(est[:,1], flavor, lookup_table, inv_lookup_table, n_basis)
-        writedlm(obdm_file,  obdm, ',')
-        @info "Computed & stored one-body density matrix." flavor=fstr time=time location=obdm_file
-
-        # Now we fix the grid and get the spatial profile.
-        x_grid = collect(-3.5:0.01:3.5)
-        time = @elapsed density_profile = FermiFCI.compute_density_profile(OrbitalType, x_grid, obdm)
-
-        # Immediately store the density profile to the output folder.
-        # (using delimited files)
-        density_file = "output/plain_density_$(fstr)_nb=$(n_basis).csv"
-        open(density_file, "w") do io
-            writedlm(io, ["x" "density"], ',')
-            writedlm(io, hcat(x_grid, density_profile),  ',')
-        end
-        @info "Computed & stored density profile." flavor=fstr time=time location=density_file
-
-    end
-    # --------------
 
     # Export.
-    datafile = "output/.csv"
     CSV.write(datafile, results);
-    @info "Exported results" location=datafile
 
-    @info "------------ Done with computation for cutoff value. ------------" n_basis=n_basis
+    @info "------------ Done with computation for coupling value. ------------" coupling=coupling
 end
+@info "Exported results" location=datafile
