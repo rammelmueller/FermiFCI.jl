@@ -16,7 +16,7 @@ end
 
 # Callable for the energy.
 (orb::BoxOrbital1D)(n::Integer)::AbstractFloat = begin
-    return n^2*pi^2/8/orb.L^2/orb.m
+    return n^2*pi^2/8/(orb.L^2)/orb.m
 end
 
 # Callable for the spatial representation of the wavefunction.
