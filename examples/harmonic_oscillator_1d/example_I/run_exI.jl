@@ -19,7 +19,7 @@ using Logging, LoggingExtras
 param = Dict{Any,Any}(
     "n_part" => [3, 1], # Particle content.
     # "n_basis_list" => collect(12:2:24), # List of cutoffs.
-    "n_basis" => 20,
+    "n_basis" => 8,
     "coupling_list" => collect(-5.0:0.5:00.0), # Interaction strength.
 
     "coeff_file" => "../alpha_coefficients_ho1d.hdf5", # Path for pre-computed coefficients.
@@ -30,7 +30,10 @@ datafile = "output/exI_data_"*string(param["n_part"][1])*"+"*string(param["n_par
 
 # Define the single-particle basis to be the 1D HO basis.
 include("../sp_basis_ho1d.jl")
-const OrbitalType = HOOrbital1D
+
+# Create an orbital with the HO-length set to unity.
+# (this is assumed for all pre-computed coefficients)
+const ho_orbital = HOOrbital1D(1.0)
 
 
 # To create the coefficients V_ijkl we use a splitting in relative and center-of-mass
@@ -46,11 +49,11 @@ for coupling in param["coupling_list"]
 
     # Construct the interaction coefficients.
     include("../bare_interaction.jl")
-    w_matrix = construct_bare_interaction(OrbitalType, param["n_basis"], coupling)
+    w_matrix = construct_bare_interaction(ho_orbital, param["n_basis"], coupling)
 
     # Piece everything together for the interaction tensor.
     include("../tensor_construction.jl")
-    v_ijkl = construct_v_tensor(OrbitalType, param["n_basis"], alpha_coeffs, w_matrix)
+    v_ijkl = construct_v_tensor(HOOrbital1D, param["n_basis"], alpha_coeffs, w_matrix)
 
     # The list of terms in the Hamiltonian, sorted by type.
     coeffs = Dict([
@@ -66,7 +69,8 @@ for coupling in param["coupling_list"]
     # Actually construct the elements of the Hamiltonian.
     @info "Setting up Hamiltonian with $n_fock Fock states."
     mem = @allocated time = @elapsed hamiltonian = construct_hamiltonian(
-        OrbitalType,
+        ho_orbital,
+        ho_orbital,
         lookup_table,
         inv_lookup_table,
         coeffs

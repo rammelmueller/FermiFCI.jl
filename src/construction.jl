@@ -34,13 +34,15 @@ function get_particle_hops(state::SpinState, n_basis::Integer)::Array{Tuple{Int,
 end
 
 
-function mb_energy(::Type{Orbital}, state::SpinState, n_basis::Integer)::AbstractFloat where {Orbital}
+function mb_energy(orbital::T, state::SpinState, n_basis::Integer)::AbstractFloat where {T<:Orbital}
     """ Retrieves the energy for a many-body state (single spin species).
     """
     e = 0
     for k = 0:n_basis-1
         if (state >>> k) & 1 > 0
-            e += Orbital(k+1).e
+            # When the instance of the orbital is called only with an index,
+            # the single-particle energy is returned.
+            e += orbital(k+1)
         end
     end
     return e
@@ -79,11 +81,12 @@ end
 
 
 function construct_hamiltonian(
-        ::Type{OrbitalType},
+        orbital_up::T,
+        orbital_down::T,
         lookup_table::LookupDict,
         inv_lookup_table::InvLookupDict,
         coeffs::Dict{String,Array{Any,1}}
-    ) where {OrbitalType}
+    ) where {T <: Orbital}
     """ Loops through the entire Hilbert space and finds the Hamiltonian Matrix
         elements.
 
@@ -112,7 +115,7 @@ function construct_hamiltonian(
 
         # Diagonal part (single-particle energies).
         # TODO: how to add in other diagonal elements here?
-        sp_elem = mb_energy(OrbitalType, s_up, n_basis) + mb_energy(OrbitalType, s_down, n_basis)
+        sp_elem = mb_energy(orbital_up, s_up, n_basis) + mb_energy(orbital_down, s_down, n_basis)
         push!(row, n)
         push!(col, n)
         push!(data, sp_elem)
