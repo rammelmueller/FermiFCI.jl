@@ -42,14 +42,14 @@ function mb_energy(orbital::T, state::SpinState, n_basis::Integer)::AbstractFloa
         if (state >>> k) & 1 > 0
             # When the instance of the orbital is called only with an index,
             # the single-particle energy is returned.
-            e += orbital(k+1)
+            e += orbital(Int16(k+1))
         end
     end
     return e
 end
 
 
-function find_n_basis(lookup_table::LookupDict)::Integer
+function find_n_basis(hilbert_space::Array{FullState,1})::Integer
     """ Finds the maximal index of the occupied single-partilce orbitals so that
         the loops are terminated at this level.
 
@@ -66,8 +66,8 @@ function find_n_basis(lookup_table::LookupDict)::Integer
                 necessary?
     """
     n_basis::Integer = 0
-    for n = 1:length(lookup_table)
-        s_up, s_down = f_to_s(lookup_table[n])
+    for state in hilbert_space
+        s_up, s_down = f_to_s(state)
 
         for s in [s_up, s_down]
             m = max_orbital(s)
@@ -83,9 +83,12 @@ end
 function construct_hamiltonian(
         orbital_up::T,
         orbital_down::T,
-        lookup_table::LookupDict,
-        inv_lookup_table::InvLookupDict,
-        coeffs::Dict{String,Array{Any,1}}
+        hilbert_space::Array{FullState,1};
+        up_coeffs::Union{Nothing,OneBodyCoeffTensor}=nothing, # ↑ single-body coefficients
+        down_coeffs::Union{Nothing,OneBodyCoeffTensor}=nothing, # ↓ single-body coefficients
+        up_down_coeffs::Union{Nothing,TwoBodyCoeffTensor}=nothing, # ↑↓ interaction
+        up_up_coeffs::Union{Nothing,TwoBodyCoeffTensor}=nothing, # ↑↑ interaction
+        down_down_coeffs::Union{Nothing,TwoBodyCoeffTensor}=nothing # ↓↓ interaction
     ) where {T <: Orbital}
     """ Loops through the entire Hilbert space and finds the Hamiltonian Matrix
         elements.
@@ -106,7 +109,9 @@ function construct_hamiltonian(
     data = Vector{DType}()
 
     # Find maximally occupied index.
-    n_basis::Integer = find_n_basis(lookup_table)
+    n_basis::Integer = find_n_basis(hilbert_space)
+    lookup_table, inv_lookup_table = make_lookup_table(hilbert_space)
+
 
     # Loop over all states in the Hilbert space.
     for n = 1:length(lookup_table)
@@ -132,68 +137,52 @@ function construct_hamiltonian(
         down_hops = get_particle_hops(s_down, n_basis)
 
         # UP/DOWN loop.
-        if length(get(coeffs, "up_down", [])) > 0
-
+        # if length(get(coeffs, "up_down", [])) > 0
+        if !isnothing(up_down_coeffs)
             for (k,i,new_up,sign_up) in up_hops
                 for (l,j,new_down,sign_down) in down_hops
-                    # Here we return the overlap - need to find the index
-                    # of the state we're producing here.
-                    # Fist: produce the state.
-                    full_state = s_to_f(new_up, new_down)
-
-                    # Look up the new state & if present, push to the list of entries.
-                    new_state = get(inv_lookup_table, full_state, nothing)
+                    new_state = get(inv_lookup_table, s_to_f(new_up, new_down), nothing)
                     if !isnothing(new_state)
-                        # Add the state to the list, format: [x, y, value].
                         push!(col, n)
                         push!(row, new_state)
-                        # push!(data, sign_up*sign_down * coeffs[i,j,l,k])
-
-
-                        # Sum all contributions.
-                        elem::DType = 0.0
-                        for ud_coeff in coeffs["up_down"]
-                            elem += ud_coeff[i,j,k,l]
-                        end
-                        push!(data, sign_up*sign_down * elem)
+                        push!(data, sign_up*sign_down * up_down_coeffs[i,j,k,l])
                     end
                 end
             end
+        end # End  of ↑↓ section.
 
-        end
+        if !isnothing(up_up_coeffs)
+            # TODO
+        end # End  of ↑↑ section.
 
-        # TODO: up-up / down-down loops.
+        if !isnothing(down_down_coeffs)
+            # TODO
+        end # End  of ↓↓ section.
 
         # ----------------------------------------------------------------
-        # Spin-selective one-body potential.
+        # One-body terms.
 
-        if length(get(coeffs, "up", [])) > 0
+        if !isnothing(up_coeffs)
             for (l,i,new_up,sign) in up_hops
-                full_state = s_to_f(new_up, s_down)
-                push!(col, n)
-                push!(row, inv_lookup_table[full_state])
-
-                elem::DType = 0.0
-                for u_coeff in coeffs["up"]
-                    elem += u_coeff[i,l]
+                new_state = get(inv_lookup_table, s_to_f(new_up, s_down), nothing)
+                if !isnothing(new_state)
+                    push!(col, n)
+                    push!(row, new_state)
+                    push!(data, -sign * up_coeffs[i,l])
                 end
-                push!(data, -sign * elem)
             end
-        end
+        end # End  of ↑ section.
 
-        if length(get(coeffs, "down", [])) > 0
+        if !isnothing(down_coeffs)
             for (l,i,new_down,sign) in down_hops
-                full_state = s_to_f(s_up, new_down)
-                push!(col, n)
-                push!(row, inv_lookup_table[full_state])
-
-                elem::DType = 0.0
-                for d_coeff in coeffs["down"]
-                    elem += d_coeff[i,l]
+                new_state = get(inv_lookup_table,  s_to_f(s_up, new_down), nothing)
+                if !isnothing(new_state)
+                    push!(col, n)
+                    push!(row, inv_lookup_table[full_state])
+                    push!(data, -sign * down_coeffs[i,l])
                 end
-                push!(data, -sign * elem)
             end
-        end
+        end # End  of ↓ section.
 
         # ----------------------------------------------------------------
 

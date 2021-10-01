@@ -19,12 +19,12 @@ struct HOOrbital1D <: HOOrbital
 end
 
 # Callable that returns the energy.
-(orb::HOOrbital1D)(i::Integer) = begin
+(orb::HOOrbital1D)(i::Int16) = begin
     return i-0.5
 end
 
 # Callable that returns the spatial wavefunction.
-(orb::HOOrbital1D)(i::Integer, x::Float64) = begin
+(orb::HOOrbital1D)(i::Int16, x::Float64) = begin
     n = big(i-1) # Formulas are typically zero-based, Julia is one-based.
     return Float64((orb.xi^2/pi)^0.25 / sqrt(2.0^n * factorial(n)) * exp(-0.5*orb.xi^2*x^2) * basis(Hermite, Int64(n))(x))
 end
