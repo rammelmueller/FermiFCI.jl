@@ -8,19 +8,6 @@
 ===============================================================================#
 using FermiFCI
 
-
-function mb_state_energy(orbital::T, state::SpinState)::AbstractFloat where T<:Orbital
-    """ Retrieves the energy for a many-body state (single spin species).
-    """
-    e = 0
-    for k = 1:length(state)
-        if state[k]>0
-            e += orbital(k)
-        end
-    end
-    return e
-end
-
 function get_max_energy(::Type{HOOrbital1D}, n_basis::Int, n_part::Array{Int,1})::AbstractFloat
     """ Finds the maximal energy for a given basis cutoff and particle configuration
         for 1D harmonically trapped particles..

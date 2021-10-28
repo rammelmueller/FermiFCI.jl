@@ -42,6 +42,8 @@ include("../alpha_coeffs.jl")
 alpha_coeffs = read_alpha_coeffs(param["coeff_file"])
 
 
+one_body_coeffs = mb_state_energy
+
 # Computation for multiple values of the basis cutoff.
 results = DataFrame("n_basis"=>[], "N"=>[], "energy"=>[], "n_fock"=>[], "coupling"=>[])
 for coupling in param["coupling_list"]

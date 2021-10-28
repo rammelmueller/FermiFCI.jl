@@ -47,3 +47,15 @@ const OneBodyCoeffTensor{T<:DType} = Array{T,2}
 const TwoBodyCoeffTensor{T<:DType} = Array{T,4}
 
 abstract type Orbital end
+
+
+struct Hamiltonian
+    """ Datatype that represents the Hamiltonian. Merely holds all necessary
+        information to construct a sparse matrix and is used only for better
+        readability.
+    """
+    row::Vector{HilbertIndex}
+    col::Vector{HilbertIndex}
+    data::Vector{DType}
+    n_fock::HilbertIndex
+end

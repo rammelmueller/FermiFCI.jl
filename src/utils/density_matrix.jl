@@ -1,11 +1,12 @@
-#===============================================================================
+include("../construction.jl")
 
-    density_matrix.jl - LR, July 2020
 
-===============================================================================#
-function compute_obdm(wf::WaveFunction, flavor::Integer, lookup_table::LookupDict, inv_lookup_table::InvLookupDict, n_basis::Integer)::Array{DType,2}
+function compute_obdm(wf::WaveFunction, flavor::Integer, hilbert_space::Array{FullState,1})::Array{DType,2}
     """ Constructs the one-body density matrix for a given wavefunction.
     """
+    n_basis::Integer = find_n_basis(hilbert_space)
+    lookup_table, inv_lookup_table = make_lookup_table(hilbert_space)
+
     obdm = zeros(DType, (n_basis, n_basis))
     for n = 1:length(lookup_table)
         state = lookup_table[n]
