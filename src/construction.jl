@@ -111,7 +111,7 @@ function construct_hamiltonian(
 
         if !isnothing(down_coeffs)
             for (l,i,new_down,sign) in down_hops
-                new_state = get(inv_lookup_table,  s_to_f(s_up, new_down), nothing)
+                new_state = get(inv_lookup_table, s_to_f(s_up, new_down), nothing)
                 if !isnothing(new_state)
                     push!(col, n)
                     push!(row, new_state)
@@ -122,7 +122,7 @@ function construct_hamiltonian(
 
         # ----------------------
 
-        # FCI part.
+        # Two-body part.
         # Loop structure:
         #   k -> mu anihilator
         #   i -> mu creator
@@ -145,12 +145,32 @@ function construct_hamiltonian(
 
         # UP/UP loop  (mu =  ↑, nu = ↑).
         if !isnothing(up_up_coeffs)
-            # TODO
+            for (k,i,temp_up,temp_sign) in up_hops
+                temp_hops = get_particle_hops(temp_up, n_basis)
+                for (l,j,new_up,new_sign) in temp_hops
+                    new_state = get(inv_lookup_table, s_to_f(new_up, s_down), nothing)
+                    if !isnothing(new_state)
+                        push!(col, n)
+                        push!(row, new_state)
+                        push!(data, temp_sign*new_sign * up_up_coeffs[i,j,k,l])
+                    end
+                end
+            end
         end # End  of ↑↑ section.
 
         # DOWN/DOWN loop  (mu =  ↓, nu = ↓).
         if !isnothing(down_down_coeffs)
-            # TODO
+            for (k,i,temp_down,temp_sign) in down_hops
+                temp_hops = get_particle_hops(temp_down, n_basis)
+                for (l,j,new_down,new_sign) in temp_hops
+                    new_state = get(inv_lookup_table, s_to_f(s_up, new_down), nothing)
+                    if !isnothing(new_state)
+                        push!(col, n)
+                        push!(row, new_state)
+                        push!(data, temp_sign*new_sign * down_down_coeffs[i,j,k,l])
+                    end
+                end
+            end
         end # End  of ↓↓ section.
 
 

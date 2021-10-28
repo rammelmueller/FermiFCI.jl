@@ -21,9 +21,11 @@ using Logging, LoggingExtras
 param = Dict{Any,Any}(
     "n_part" => [1, 3], # Particle content.
     "n_basis" => 14,
+
     "box_length" => 7.0,
     "mass" => [6.66667, 1.0], # Up / down particle mass.
-    "coupling_list" => collect(0.0:0.25:7.0), # Interaction strength.
+    "coupling_list" => collect(0.0:0.25:4.0), # Interaction strength.
+
     "n_eigenvalues" => 7, # Number of lowest eigenvalues to compute.
 )
 
@@ -34,10 +36,12 @@ include("../sp_basis_box1d.jl")
 const box_orbital_up = BoxOrbital1D(param["box_length"]/2, param["mass"][1])
 const box_orbital_down = BoxOrbital1D(param["box_length"]/2, param["mass"][2])
 
-# Make the single-particle coefficients.
-# (we use the fact that we have a diagonal basis)
+
+# Make the single-particle coefficients
+# (we use the fact that we have a diagonal basis).
 cij_up = Matrix(Diagonal([box_orbital_up(n) for n=1:param["n_basis"]]))
 cij_down = Matrix(Diagonal([box_orbital_down(n) for n=1:param["n_basis"]]))
+
 
 # Construct the interaction tensor from scratch.
 include("../tensor_construction.jl")
@@ -45,25 +49,27 @@ include("../tensor_construction.jl")
 time = @elapsed v_ijkl = construct_v_tensor(box_orbital_up, box_orbital_down, param["n_basis"])
 @info "Constructed interaction coefficients." time=time
 
+
 # Make the simple basis-cutoff Hilbert space.
 hilbert_space = FermiFCI.get_plain_fock_basis(param["n_basis"], param["n_part"])
 
 
 # ------------
-# Loop through all couplings.
+# Loop through all couplings and collect results..
 results = DataFrame("n_basis"=>[], "N"=>[], "energy"=>[], "n_fock"=>[], "coupling"=>[])
+
 for coupling in param["coupling_list"]
 
-    # ------------
     # Actually construct the Hamiltonian.
     @info "Setting up Hamiltonian." n_fock=length(hilbert_space)
     local mem = @allocated local time = @elapsed hamiltonian = construct_hamiltonian(
         hilbert_space,
         up_coeffs=cij_up,
         down_coeffs=cij_down,
-        up_down_coeffs=v_ijkl*coupling
+        up_down_coeffs=v_ijkl*coupling # Don't forget the coupling.
     )
     @info "Done constructing the Hamiltonian." time=time memory=FermiFCI.Utils.MemoryTag(mem)
+
 
     # ------------
     # Diagonalization and storage of spectrum.
@@ -71,6 +77,7 @@ for coupling in param["coupling_list"]
     for k=1:param["n_eigenvalues"]
         push!(results, Dict{Any,Any}("n_basis"=>param["n_basis"], "energy"=>ev[k], "N"=>k, "n_fock"=>length(hilbert_space), "coupling"=>coupling))
     end
+
 
     # ------------
     # Compute the ground-state density-profile for both species.
@@ -92,8 +99,8 @@ for coupling in param["coupling_list"]
             writedlm(io, hcat(x_grid, density_profile),  ',')
         end
         @info "Computed & stored density profile." flavor=fstr time=time location=density_file
-
     end
+
 
     # --------------
     # Export.
