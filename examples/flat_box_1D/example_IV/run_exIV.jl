@@ -61,7 +61,7 @@ for coupling in param["coupling_list"]
         hilbert_space,
         up_coeffs=cij_up,
         down_coeffs=cij_down,
-        up_down_coeffs=v_ijkl
+        up_down_coeffs=v_ijkl*coupling
     )
     @info "Done constructing the Hamiltonian." time=time memory=FermiFCI.Utils.MemoryTag(mem)
 
