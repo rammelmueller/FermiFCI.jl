@@ -35,9 +35,8 @@ function get_energy_restricted_fock_basis(orbital::T, n_basis::Int, n_part::Arra
     # Loop through all states and check.
     energy_states = Array{FullState,1}()
     for state in all_states
-        su, sd = FermiFCI.f_to_s(state)
-        if mb_state_energy(orbital, su) + mb_state_energy(orbital, sd) <= max_energy
-            push!(energy_states, FermiFCI.s_to_f(su, sd))
+        if mb_state_energy(orbital, orbital, state) <= max_energy
+            push!(energy_states, state)
         end
     end
     return energy_states

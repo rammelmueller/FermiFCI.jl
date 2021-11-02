@@ -10,7 +10,7 @@
 ===============================================================================#
 push!(LOAD_PATH, "/home/lukas/projects/FermiFCI/")
 using FermiFCI
-using Arpack
+using LinearAlgebra
 using DataFrames, CSV, DelimitedFiles
 using Logging, LoggingExtras
 
@@ -32,8 +32,11 @@ datafile = "output/exI_data_"*string(param["n_part"][1])*"+"*string(param["n_par
 include("../sp_basis_ho1d.jl")
 
 # Create an orbital with the HO-length set to unity.
-# (this is assumed for all pre-computed coefficients)
+# (this is assumed for all pre-computed coefficients used here)
 const ho_orbital = HOOrbital1D(1.0)
+
+# Make the single-body coefficients (same for both species).
+c_ij = Matrix(Diagonal([ho_orbital(n) for n=1:param["n_basis"]]))
 
 
 # To create the coefficients V_ijkl we use a splitting in relative and center-of-mass
@@ -42,8 +45,13 @@ include("../alpha_coeffs.jl")
 alpha_coeffs = read_alpha_coeffs(param["coeff_file"])
 
 
+# Make the simple basis-cutoff Hilbert space.
+hilbert_space = FermiFCI.get_plain_fock_basis(param["n_basis"], param["n_part"])
+
+
 # Computation for multiple values of the basis cutoff.
 results = DataFrame("n_basis"=>[], "N"=>[], "energy"=>[], "n_fock"=>[], "coupling"=>[])
+
 for coupling in param["coupling_list"]
     @info "------------ Staring computation for coupling value ------------" coupling=coupling
 
@@ -55,47 +63,24 @@ for coupling in param["coupling_list"]
     include("../tensor_construction.jl")
     v_ijkl = construct_v_tensor(HOOrbital1D, param["n_basis"], alpha_coeffs, w_matrix)
 
-    # The list of terms in the Hamiltonian, sorted by type.
-    coeffs = Dict([
-        "up" => [],
-        "down" => [],
-        "up_down" => [v_ijkl],
-    ])
-
-    # Make the simple basis-cutoff Hilbert space and lookup tables with the provided method.
-    lookup_table, inv_lookup_table = FermiFCI.make_plain_lookup_table(param["n_basis"], param["n_part"])
-    n_fock = length(lookup_table)
 
     # Actually construct the elements of the Hamiltonian.
-    @info "Setting up Hamiltonian with $n_fock Fock states."
+    @info "Setting up Hamiltonian." n_fock=length(hilbert_space)
     mem = @allocated time = @elapsed hamiltonian = construct_hamiltonian(
-        ho_orbital,
-        ho_orbital,
-        lookup_table,
-        inv_lookup_table,
-        coeffs
+        hilbert_space,
+        up_coeffs=c_ij,
+        down_coeffs=c_ij,
+        up_down_coeffs=v_ijkl
     )
     @info "Done constructing the Hamiltonian." time=time memory=FermiFCI.Utils.MemoryTag(mem)
 
-    # --------------------------------------------------------
-    # Diagonalization.
-
-    @info "Starting to diagonalize the Hamiltonian."
-    # The :SR setting gives the smallest reals under consideration of the sign, that
-    # corresponds to th the lowest part of the spectrum.
-    time = @elapsed mem = @allocated ev, est = eigs(
-        hamiltonian,
-        nev=param["n_eigenvalues"],
-        which=:SR
-    )
-    @info "Done computing the lower spectrum." time=time memory=FermiFCI.Utils.MemoryTag(mem) spectrum=ev
+    # ------------
+    # Diagonalization and storage of spectrum.
+    ev, est = diagonalize(hamiltonian, param)
     for k=1:param["n_eigenvalues"]
-        push!(results, Dict{Any,Any}("n_basis"=>param["n_basis"], "energy"=>ev[k], "N"=>k, "n_fock"=>n_fock, "coupling"=>coupling))
+        push!(results, Dict{Any,Any}("n_basis"=>param["n_basis"], "energy"=>ev[k], "N"=>k, "n_fock"=>length(hilbert_space), "coupling"=>coupling))
     end
-
-    # Export.
     CSV.write(datafile, results);
 
     @info "------------ Done with computation for coupling value. ------------" coupling=coupling
 end
-@info "Exported results" location=datafile

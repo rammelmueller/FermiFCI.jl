@@ -7,12 +7,13 @@ module FermiFCI
 
 # Those are the exported functions.
 # (the ones that can be called without the namespace prefix)
-export Orbital, FullState, SpinState, LookupDict, InvLookupDict, OneBodyCoeffTensor, TwoBodyCoeffTensor, construct_hamiltonian, make_plain_lookup_table, make_lookup_table, diagonalize
+export Orbital, FullState, SpinState, OneBodyCoeffTensor, TwoBodyCoeffTensor, construct_hamiltonian, diagonalize, mb_state_energy
 
 
 
 # Holds type definitions, should be loaded first.
 include("typedefs.jl")
+include("state_reps/state_functions.jl")
 
 # Some utilities for basis preparation.
 include("utils/plain_hilbert_construction.jl")

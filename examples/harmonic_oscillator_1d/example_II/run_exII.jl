@@ -10,7 +10,7 @@
 ===============================================================================#
 push!(LOAD_PATH, "/home/lukas/projects/FermiFCI/")
 using FermiFCI
-using Arpack
+using LinearAlgebra
 using DataFrames, CSV, DelimitedFiles
 using Logging, LoggingExtras
 
@@ -21,8 +21,6 @@ using Logging, LoggingExtras
 include("../sp_basis_ho1d.jl")
 const ho_orbital = HOOrbital1D(1.0)
 
-# Include the definitions
-include("hilbert_energy_restriction.jl")
 
 # Set the parameters here.
 param = Dict{Any,Any}(
@@ -41,11 +39,19 @@ param = Dict{Any,Any}(
 include("../alpha_coeffs.jl")
 alpha_coeffs = read_alpha_coeffs(param["coeff_file"])
 
+# Include the definitions
+include("hilbert_energy_restriction.jl")
+
 
 # Computation for multiple values of the basis cutoff.
-results = DataFrame("n_basis"=>[], "N"=>[], "energy"=>[], "n_fock"=>[])
+datafile = "output/exIII_data.csv"
+results = DataFrame("n_basis"=>[], "N"=>[], "energy"=>[], "n_fock"=>[], "coupling"=>[])
+
 for n_basis in param["n_basis_list"]
     @info "------------ Staring computation for cutoff value ------------" n_basis=n_basis
+
+    # Make the single-body coefficients (same for both species).
+    c_ij = Matrix(Diagonal([ho_orbital(n) for n=1:n_basis]))
 
     # Construct the interaction coefficients.
     include("../bare_interaction.jl")
@@ -55,71 +61,48 @@ for n_basis in param["n_basis_list"]
     include("../tensor_construction.jl")
     v_ijkl = construct_v_tensor(HOOrbital1D, n_basis, alpha_coeffs, w_matrix)
 
-    coeffs = Dict([
-        "up" => [],
-        "down" => [],
-        "up_down" => [v_ijkl],
-    ])
-
     # Produce the Hilbert space with energy restriction..
-    fock_states = get_energy_restricted_fock_basis(ho_orbital, n_basis, param["n_part"])
-
-    # With those states, construct the lookup table.
-    lookup_table, inv_lookup_table = make_lookup_table(fock_states)
-    n_fock = length(lookup_table)
+    hilbert_space = get_energy_restricted_fock_basis(ho_orbital, n_basis, param["n_part"])
 
     # Actually construct the elements of the Hamiltonian.
-    @info "Setting up Hamiltonian with $n_fock Fock states."
+    @info "Setting up Hamiltonian." n_fock=length(hilbert_space)
     mem = @allocated time = @elapsed hamiltonian = construct_hamiltonian(
-        ho_orbital,
-        ho_orbital,
-        lookup_table,
-        inv_lookup_table,
-        coeffs
+        hilbert_space,
+        up_coeffs=c_ij,
+        down_coeffs=c_ij,
+        up_down_coeffs=v_ijkl
     )
     @info "Done constructing the Hamiltonian." time=time memory=FermiFCI.Utils.MemoryTag(mem)
 
-    # --------------------------------------------------------
-    # Diagonalization.
 
-    @info "Starting to diagonalize the Hamiltonian."
-    # The :SR setting gives the smallest reals under consideration of the sign, that
-    # corresponds to th the lowest part of the spectrum.
-    time = @elapsed mem = @allocated ev, est = eigs(
-        hamiltonian,
-        nev=param["n_eigenvalues"],
-        which=:SR
-    )
-    @info "Done computing the lower spectrum." time=time memory=FermiFCI.Utils.MemoryTag(mem) spectrum=ev
+    # ------------
+    # Diagonalization and storage of spectrum.
+    ev, est = diagonalize(hamiltonian, param)
     for k=1:param["n_eigenvalues"]
-        push!(results, Dict{Any,Any}("n_basis"=>n_basis, "energy"=>ev[k], "N"=>k, "n_fock"=>n_fock))
+        push!(results, Dict{Any,Any}("n_basis"=>n_basis, "energy"=>ev[k], "N"=>k, "n_fock"=>length(hilbert_space), "coupling"=>param["coupling"]))
     end
+    CSV.write(datafile, results) # Export data incrementally.
 
+
+    # ------------
     # Compute the ground-state density-profile for both species.
     for flavor=1:2
         # First step: one-body density-matrix computed from the GS wavefunction.
-        obdm = FermiFCI.compute_obdm(est[:,1], flavor, lookup_table, inv_lookup_table, n_basis)
-
+        obdm = FermiFCI.compute_obdm(est[:,1], flavor, hilbert_space)
         # Now we fix the grid and get the spatial profile.
         x_grid = collect(-3.5:0.01:3.5)
-        density_profile = FermiFCI.compute_density_profile(ho_orbital, x_grid, obdm)
+        time = @elapsed density_profile = FermiFCI.compute_density_profile(ho_orbital, x_grid, obdm)
 
         # Immediately store the density profile to the output folder.
         # (using delimited files)
         fstr = flavor==1 ? "up" : "down"
-        density_file = "output/restricted_density_$(fstr)_nb=$(n_basis).csv"
+        density_file = "output/flat_density_$(fstr)_g="*string(param["coupling"])*".csv"
         open(density_file, "w") do io
             writedlm(io, ["x" "density"], ',')
             writedlm(io, hcat(x_grid, density_profile),  ',')
         end
+        @info "Computed & stored density profile." flavor=fstr time=time location=density_file
     end
-    # --------------
-
-
-    # Export.
-    datafile = "output/exII_results.csv"
-    CSV.write(datafile, results);
-    @info "Exported results" location=datafile
 
 
     @info "------------ Done with computation for cutoff value. ------------" n_basis=n_basis
