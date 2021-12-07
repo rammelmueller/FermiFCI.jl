@@ -8,7 +8,7 @@
     Parameters may be changed in the param dictionary.
 
 ===============================================================================#
-push!(LOAD_PATH, "/home/lukas/projects/FermiFCI/")
+# push!(LOAD_PATH, "/home/lukas/projects/FermiFCI/")
 using FermiFCI
 using LinearAlgebra
 using DataFrames, CSV, DelimitedFiles
@@ -24,8 +24,13 @@ param = Dict{Any,Any}(
 
     "coeff_file" => "../alpha_coefficients_ho1d.hdf5", # Path for pre-computed coefficients.
     "n_eigenvalues" => 5, # Number of lowest eigenvalues to compute.
+
+    "output_directory" => "./output/" # Location of output.
 )
-datafile = "output/exI_data_"*string(param["n_part"][1])*"+"*string(param["n_part"][2])*".csv"
+if !isdir(param["output_directory"])
+    mkdir(param["output_directory"])
+end
+datafile = param["output_directory"]*"/exI_data_"*string(param["n_part"][1])*"+"*string(param["n_part"][2])*".csv"
 
 
 # Define the single-particle basis to be the 1D HO basis.

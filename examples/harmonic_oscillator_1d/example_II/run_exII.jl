@@ -31,8 +31,13 @@ param = Dict{Any,Any}(
 
     "coeff_file" => "../alpha_coefficients_ho1d.hdf5", # Path for pre-computed coefficients.
     "n_eigenvalues" => 5, # Number of lowest eigenvalues to compute.
-)
 
+    "output_directory" => "./output/" # Location of output.
+)
+if !isdir(param["output_directory"])
+    mkdir(param["output_directory"])
+end
+datafile = param["output_directory"]*"/exIII_data.csv"
 
 # To create the coefficients V_ijkl we use a splitting in relative and center-of-mass
 # motion. For simplicity thoase are pre-computed and loaded from file.
@@ -44,9 +49,7 @@ include("hilbert_energy_restriction.jl")
 
 
 # Computation for multiple values of the basis cutoff.
-datafile = "output/exIII_data.csv"
 results = DataFrame("n_basis"=>[], "N"=>[], "energy"=>[], "n_fock"=>[], "coupling"=>[])
-
 for n_basis in param["n_basis_list"]
     @info "------------ Staring computation for cutoff value ------------" n_basis=n_basis
 

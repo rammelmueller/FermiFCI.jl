@@ -30,7 +30,13 @@ param = Dict{Any,Any}(
 
     "coeff_file" => "../alpha_coefficients_ho1d.hdf5", # Path for pre-computed coefficients.
     "n_eigenvalues" => 5, # Number of lowest eigenvalues to compute.
+
+    "output_directory" => "./output/" # Location of output.
 )
+if !isdir(param["output_directory"])
+    mkdir(param["output_directory"])
+end
+datafile = param["output_directory"]*"output/exIV_data.csv"
 
 
 # Make the simple basis-cutoff Hilbert space.
@@ -48,7 +54,6 @@ alpha_coeffs = read_alpha_coeffs(param["coeff_file"])
 
 
 # Computation for multiple values of the basis cutoff.
-datafile = "output/exIV_data.csv"
 results = DataFrame("n_basis"=>[], "N"=>[], "energy"=>[], "n_fock"=>[], "coupling"=>[])
 for coupling in param["coupling_list"]
     @info "------------ Staring computation for couipling value ------------" coupling=coupling

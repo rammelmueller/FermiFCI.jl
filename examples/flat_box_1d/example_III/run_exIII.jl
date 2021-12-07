@@ -27,7 +27,12 @@ param = Dict{Any,Any}(
     "coupling_list" => collect(0.0:0.25:4.0), # Interaction strength.
 
     "n_eigenvalues" => 7, # Number of lowest eigenvalues to compute.
+
+    "output_directory" => "./output/" # Location of output.
 )
+if !isdir(param["output_directory"])
+    mkdir(param["output_directory"])
+end
 
 # ------------
 
@@ -57,7 +62,6 @@ hilbert_space = FermiFCI.get_plain_fock_basis(param["n_basis"], param["n_part"])
 # ------------
 # Loop through all couplings and collect results..
 results = DataFrame("n_basis"=>[], "N"=>[], "energy"=>[], "n_fock"=>[], "coupling"=>[])
-
 for coupling in param["coupling_list"]
 
     # Actually construct the Hamiltonian.
@@ -93,7 +97,7 @@ for coupling in param["coupling_list"]
         # Immediately store the density profile to the output folder.
         # (using delimited files)
         fstr = flavor==1 ? "up" : "down"
-        density_file = "output/flat_density_$(fstr)_g="*string(coupling)*".csv"
+        density_file = param["output_directory"]*"/flat_density_$(fstr)_g="*string(coupling)*".csv"
         open(density_file, "w") do io
             writedlm(io, ["x" "density"], ',')
             writedlm(io, hcat(x_grid, density_profile),  ',')
@@ -104,7 +108,7 @@ for coupling in param["coupling_list"]
 
     # --------------
     # Export.
-    datafile = "output/exIII_data.csv"
+    datafile = param["output_directory"]*"/exIII_data.csv"
     CSV.write(datafile, results)
     @info "Exported results" location=datafile
 
