@@ -19,9 +19,11 @@ When started this way, newly installed packages are added only to this project. 
 
 Once you added the `FermiFCI.jl` package, this is it - you're good to go.
 
+Roadmap: In the near future FermiFCI will be available as an official package - stay tuned!
+
 
 ### Usage
-As a first step, it is advisable to execute one of the examples (see below) that are provided in this repository. Here, it's good to know that adding the package itself only installs the required prerequisites for the core functionality. Packages that are used by the examples (such as for example `SpecialPolynomials`, `HDF5` and `Combinatorics`) need to be added manually - see the list of required packages in the documentation of the examples themselves.
+As a first step, it is advisable to execute one of the examples (see below) that are provided in this repository. Here, it's good to know that adding the package itself only installs the required prerequisites for the core functionality. Packages that are used by the examples need to be added manually - see the list of required packages in the documentation of the examples themselves.
 
 To execute one of the examples, it is best to copy the corresponding source code to you local project directory. Strictly, the examples are not part of the `FermiFCI.jl` package, but they are conveniently distributed alongside it.
 
@@ -36,8 +38,7 @@ By default, there are several examples included to pitch the idea on how the pre
 - Example III: Few fermions in 1D flat box with mass imbalance.
 - Example IV: Effective interaction for 1D harmonically trapped fermions.
 
+A more complete discussion of the examples and the associated phyiscs / ideas can be found [here]().
 
 ## Legal
-[ ] We need to figure out the License stuff (MIT?).
-
-If you use this for any publication, please cite us. Have fun!
+Published under the MIT Licencse. If you use this for any publication, please cite us. Have fun!
