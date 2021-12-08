@@ -36,7 +36,7 @@ param = Dict{Any,Any}(
 if !isdir(param["output_directory"])
     mkdir(param["output_directory"])
 end
-datafile = param["output_directory"]*"output/exIV_data.csv"
+datafile = param["output_directory"]*"/exIV_data.csv"
 
 
 # Make the simple basis-cutoff Hilbert space.

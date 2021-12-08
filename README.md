@@ -5,9 +5,19 @@ A simple and lightweight toolbox for performing exploratory FCI calculation in a
 Here's a few tips on how to get started, assuming you have installed Julia already. If you haven't please check out [the documentation on how to get started with Julia](https://docs.julialang.org/en/v1/manual/getting-started/).
 
 ### Prerequisites
-The package was developed with `Julia v1.5.3` so make sure you have this or a later version installed on your machine. Additionally, some examples use the package [PyCall](https://github.com/JuliaPy/PyCall.jl) which uses the locally available Python installation for some special functions. It's advisable to have Python 3 available with scipy and numpy installed. It is also possible to change the version of Python that is used, for this please check the [documentation of PyCall](https://github.com/JuliaPy/PyCall.jl).
+The package was developed with `Julia v1.5.3` so make sure you have this or a later version installed on your machine.
 
-Hint: simply starting Julia within a Python virtual environment does not work.
+#### Python and Pycall.
+Additionally, some examples use the package [PyCall](https://github.com/JuliaPy/PyCall.jl) which uses the locally available Python installation for some special functions. It's advisable to have Python 3 available with `scipy`, `numpy` as well as `mpmath` installed.
+
+#### In case of Python problems
+By default, this might be a Julia specific version (via Anaconda) that potentially doesn't have the necessary Python packages available. In case of problems it might be necessary to change the version of Python that is used by Julia which can quickly be done. Simply enter the Julia REPL and set
+```
+    ENV["PYTHON"] = "/path/to/python/version"
+```
+which tells Julia to use a specific version of Python. More often than not you're looking for the path `/usr/bin/python` or `/usr/bin/python3`, but this could in principle be anything. Then, enter the Pkg REPL (with  `]`) and type `build PyCall`. After restarting Julia your problems should be solved, assuming the corresponding packages are available in this version of Python. If not, simply install them with `pip`.
+
+For more information on this please check the [documentation of PyCall](https://github.com/JuliaPy/PyCall.jl).
 
 
 ### Installing `FermiFCI.jl`
@@ -15,7 +25,7 @@ To get started with `FermiFCI.jl` simply clone this repository and add the packa
 ```
     julia --project=/path/to/the/root/of/your/project
 ```
-When started this way, newly installed packages are added only to this project. This is particularly helpful on HPC environments as it circumvents potential permission issues. Packages can be added either directly in the Julia REPL, or by entering the Pkg REPL with `]` and simply type `add PackageName` or, for the case here, `add /path/to/FermiFCI.jl`. More information can be found [here](https://docs.julialang.org/en/v1/stdlib/Pkg/).
+When started this way, newly installed packages are added only to this project. This is particularly helpful on HPC environments as it circumvents potential permission issues. Packages can be added either directly in the Julia REPL, or by entering the Pkg REPL with `]` and simply type `add PackageName` or, for the case here, `add /path/to/FermiFCI/`. More information can be found [here](https://docs.julialang.org/en/v1/stdlib/Pkg/).
 
 Once you added the `FermiFCI.jl` package, this is it - you're good to go.
 
