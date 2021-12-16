@@ -24,12 +24,12 @@ const ho_orbital = HOOrbital1D(1.0)
 
 # Set the parameters here.
 param = Dict{Any,Any}(
-    "n_part" => [3, 1], # Particle content.
+    "n_part" => [4,1], # Particle content.
     "n_basis" => 12,
-    "coupling_list" => collect(-5.0:0.5:5.0), # Interaction strength.
+    "coupling_list" => [-4.0, -1.0, 1.0, 4.0],
 
     "coeff_file" => "../alpha_coefficients_ho1d.hdf5", # Path for pre-computed coefficients.
-    "n_eigenvalues" => 5, # Number of lowest eigenvalues to compute.
+    "n_eigenvalues" => 3, # Number of lowest eigenvalues to compute.
 
     "output_directory" => "./output/" # Location of output.
 )

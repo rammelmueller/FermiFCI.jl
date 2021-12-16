@@ -17,13 +17,13 @@ using Logging, LoggingExtras
 
 # Set the parameters here.
 param = Dict{Any,Any}(
-    "n_part" => [3, 1], # Particle content.
+    "n_part" => [5,1], # Particle content.
     # "n_basis_list" => collect(12:2:24), # List of cutoffs.
-    "n_basis" => 8,
-    "coupling_list" => collect(-5.0:0.5:00.0), # Interaction strength.
+    "n_basis" => 16,
+    "coupling_list" => [-4.0, -1.0, 1.0, 4.0], # Interaction strength.
 
     "coeff_file" => "../alpha_coefficients_ho1d.hdf5", # Path for pre-computed coefficients.
-    "n_eigenvalues" => 5, # Number of lowest eigenvalues to compute.
+    "n_eigenvalues" => 1, # Number of lowest eigenvalues to compute.
 
     "output_directory" => "./output/" # Location of output.
 )
