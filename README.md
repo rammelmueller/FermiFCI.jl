@@ -20,7 +20,9 @@ Roadmap: In the near future FermiFCI will be available as an official package - 
 
 
 ### Usage
-The package is deliberately kept simple - there's only a handful of routines to call, mainly to construct a hamiltonian and to diagonalize the resulting matrix along with some type definitions and a few extra utility functions to carry out common tasks (such as the construction of a plain list of available states). As a first step, it is advisable to execute one of the examples which are discussed [in this paper]() - the paper also explains some generic FCI details. The source code of those is available in a [separate repository](https://github.com/rammelmueller/fermifci_data_repo). Here, it's good to know that adding the package itself only installs the required prerequisites for the core functionality of `FermiFCI.jl`. Packages that are used by the examples need to be added manually - see the list of required packages in the documentation of the examples themselves.
+The package is deliberately kept simple - there's only a handful of routines to call, mainly to construct a hamiltonian and to diagonalize the resulting matrix along with some type definitions and a few extra utility functions to carry out common tasks (such as the construction of a plain list of available states). 
+
+As a first step, it is advisable to execute one of the examples which are discussed [in this paper]() - the paper also explains some generic FCI details. The source code of those is available in a [separate repository](https://github.com/rammelmueller/fermifci_data_repo). Here, it's good to know that adding the package itself only installs the required prerequisites for the core functionality of `FermiFCI.jl`. Packages that are used by the examples need to be added manually - see the list of required packages in the documentation of the examples themselves.
 
 Should you choose not too go with one of the provided examples (or moved on from this first step), all you have to do is to include `using FermiFCI` in your code, then you'll be able to use all core functionality.
 

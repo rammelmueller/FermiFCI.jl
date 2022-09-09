@@ -36,7 +36,10 @@ function compute_obdm(wf::WaveFunction, flavor::Integer, hilbert_space::Array{Fu
 end
 
 
-function compute_tbdm_up_down(wf::WaveFunction, lookup_table::LookupDict, inv_lookup_table::InvLookupDict, n_basis::Integer)::Array{DType,4}
+function compute_tbdm_up_down(wf::WaveFunction, hilbert_space::Array{FullState,1})::Array{DType,4}
+    n_basis::Integer = find_n_basis(hilbert_space)
+    lookup_table, inv_lookup_table = make_lookup_table(hilbert_space)
+
     # The one-body density-matrix in the
     tbdm = zeros(DType, (n_basis, n_basis, n_basis, n_basis))
     for n = 1:length(lookup_table)

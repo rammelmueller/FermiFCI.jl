@@ -19,7 +19,7 @@ While the current implementation uses simple unsigned integer types, this may ch
 
 To reflect a full state with both spin species, two objects of the `SpinState` type are combined to a `FullState`. To this end, the conversion routine `f = s_to_f(s, m)` is provided which converts two objects of the type `SpinState` to a `FullState` object. Accordingly, the expression `s, m = f_to_s(f)` does the opposite.
 
-In addition, these states have some extra functions defined which may be looked up directly in the source code in `src/state_reps.jl`.
+In addition, these states have some extra functions defined which may be looked up directly in the source code in `src/state_reps/`.
 
 
 ### Construction of the Hamiltonian
@@ -37,7 +37,7 @@ Once the elements of a given Hamiltonian have been computed, all that is left to
 ```
     ev, est = diagonalize(ham, param)
 ```
-where extra parameters such as the number of eigenvalues (`n_eivenvalues`), the type of eigenvalues (`ev_type`), the absolute tolerance (`tol`) as well as the maximum number of iterations (`max_iter`) may be specified in the dictionary `param`. All these parameters are described [in the ARPACK.jl package](https://arpack.julialinearalgebra.org/latest/).
+where extra parameters such as the number of eigenvalues (`n_eivenvalues`), the type of eigenvalues (`ev_type`), the absolute tolerance (`tol`) as well as the maximum number of iterations (`max_iter`) may be specified in the dictionary `param` with the indicated keys. If nothing is specified default values are used. All these parameters are described [in the ARPACK.jl package](https://arpack.julialinearalgebra.org/latest/).
 
 The diagonalization returns the final result of the calculation: Eigenvalues (`ev`) and eigenstates (`est`) for the constructed Hamiltonian. 
 
