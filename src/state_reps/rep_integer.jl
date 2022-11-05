@@ -26,7 +26,7 @@ end
 
 
 function create(s::SpinState, i::Integer)::Union{Nothing,SpinState}
-    """ Destroys a particle at position i, false if there's a particle already.
+    """ Creates a particle at position i, false if there's a particle already.
     """
     shift = 1 << (i-1)
     if s & shift == 0

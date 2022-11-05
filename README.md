@@ -20,12 +20,23 @@ Roadmap: In the near future FermiFCI will be available as an official package - 
 
 
 ### Usage
-The package is deliberately kept simple - there's only a handful of routines to call, mainly to construct a hamiltonian and to diagonalize the resulting matrix along with some type definitions and a few extra utility functions to carry out common tasks (such as the construction of a plain list of available states). 
+The package is deliberately kept simple - there's only a handful of routines to call, mainly to construct a hamiltonian and to diagonalize the resulting matrix along with some type definitions and a few extra utility functions to carry out common tasks (such as the construction of a plain list of available states).
 
 As a first step, it is advisable to execute one of the examples which are discussed [in this paper]() - the paper also explains some generic FCI details. The source code of those is available in a [separate repository](https://github.com/rammelmueller/fermifci_data_repo). Here, it's good to know that adding the package itself only installs the required prerequisites for the core functionality of `FermiFCI.jl`. Packages that are used by the examples need to be added manually - see the list of required packages in the documentation of the examples themselves.
 
 Should you choose not too go with one of the provided examples (or moved on from this first step), all you have to do is to include `using FermiFCI` in your code, then you'll be able to use all core functionality.
 
+
+### Troubleshooting
+- It was brought to our attention that on MacOS some imports require adjusting filepaths to absolute paths, which seems to be connected with the HDF5.jl package.
+
+
+## Applications
+Here we list some applications that rely on FermiFCI.jl:
+- [A modular implementation of an effective interaction approach for harmonically trapped fermions in 1D](https://arxiv.org/abs/2202.04603) - accompanying paper to this package. Implements harmonically trapped fermions with and without energy restriction of the many-body basis, few-fermion problems with flat traps with and without mass-imbalance of the two species as well as an effective interaction approach.
+- [Magnetic impurity in a one-dimensional few-fermion system](https://arxiv.org/abs/2204.01606) - Extended treatment of harmonically trapped fermions with the presence of a delta-like static magnetic impurity.
+
+If your paper should be included in this list, please get in touch!
 
 ## Legal
 Published under the MIT Licencse. If you use this for any publication, please cite us. Have fun!
